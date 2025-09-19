@@ -15,7 +15,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { mainMenu } from "@/config/menu";
-import { ChevronDownIcon, GitHubLogoIcon, GlobeIcon, InstagramLogoIcon, LinkedInLogoIcon, ViewVerticalIcon } from "@radix-ui/react-icons";
+import {
+  ChevronDownIcon,
+  GitHubLogoIcon,
+  GlobeIcon,
+  InstagramLogoIcon,
+  LinkedInLogoIcon,
+  ViewVerticalIcon,
+} from "@radix-ui/react-icons";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { Logo } from "../logo";
 import {
@@ -25,7 +32,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { ModeToggle } from "../mode-toggle";
-import { Instagram, Linkedin } from "lucide-react";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -252,73 +258,75 @@ export function Header() {
                       Sulav Jung Hamal
                     </p>
 
-                      <p className="text-xs leading-none text-muted-foreground">Contributor and creator</p>
-
-                    
+                    <p className="text-xs leading-none text-muted-foreground">
+                      Contributor and creator
+                    </p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                <div className="flex flex-col space-y-1">
+                  <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none flex flex-row items-center gap-2">
-                      <GlobeIcon height={24} width={24} /> 
+                      <GlobeIcon height={24} width={24} />
                       <p>
-                      Website
+                        Website
                         <p className="text-xs leading-none text-muted-foreground">
-                          <a href={appConfig.website.url}>{appConfig.website.name}</a>
+                          <a href={appConfig.website.url}>
+                            {appConfig.website.name}
+                          </a>
                         </p>
                       </p>
                     </p>
-                    
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                <div className="flex flex-col space-y-1">
+                  <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none flex flex-row items-center gap-2">
-                      <InstagramLogoIcon height={24} width={24} /> 
+                      <InstagramLogoIcon height={24} width={24} />
                       <p>
-                      Instagram
+                        Instagram
                         <p className="text-xs leading-none text-muted-foreground">
-                          <a href={appConfig.instagram.url}>{appConfig.instagram.name}</a>
+                          <a href={appConfig.instagram.url}>
+                            {appConfig.instagram.name}
+                          </a>
                         </p>
                       </p>
                     </p>
-                    
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                <div className="flex flex-col space-y-1">
+                  <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none flex flex-row items-center gap-2">
-                      <LinkedInLogoIcon height={24} width={24} /> 
+                      <LinkedInLogoIcon height={24} width={24} />
                       <p>
-                      LinkedIn
+                        LinkedIn
                         <p className="text-xs leading-none text-muted-foreground">
-                          <a href={appConfig.linkedIn.url}>{appConfig.linkedIn.name}</a>
+                          <a href={appConfig.linkedIn.url}>
+                            {appConfig.linkedIn.name}
+                          </a>
                         </p>
                       </p>
                     </p>
-                    
                   </div>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
-                <div className="flex flex-col space-y-1">
+                  <div className="flex flex-col space-y-1">
                     <p className="text-sm font-medium leading-none flex flex-row items-center gap-2">
-                      <GitHubLogoIcon height={24} width={24} /> 
+                      <GitHubLogoIcon height={24} width={24} />
                       <p>
-                      Github
+                        Github
                         <p className="text-xs leading-none text-muted-foreground">
-                          <a href={appConfig.github.url}>{appConfig.github.name}</a>
+                          <a href={appConfig.github.url}>
+                            {appConfig.github.name}
+                          </a>
                         </p>
                       </p>
                     </p>
-                    
                   </div>
                 </DropdownMenuItem>
-                
-                
               </DropdownMenuContent>
             </DropdownMenu>
           </nav>
