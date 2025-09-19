@@ -3,7 +3,7 @@ interface AppConfig {
   github: {
     title: string;
     url: string;
-    name: string
+    name: string;
   };
   author: {
     name: string;
@@ -24,11 +24,11 @@ interface AppConfig {
 }
 
 export const appConfig: AppConfig = {
-  name: "Label Creator",
+  name: "Refactor Inventory",
   github: {
     title: "React Shadcn Starter",
     url: "https://github.com/sulavJung",
-    name: "sulavJung"
+    name: "sulavJung",
   },
   author: {
     name: "Sulav",

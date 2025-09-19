@@ -8,7 +8,8 @@ import Empty from "./pages/Empty";
 import React, { useState, useEffect } from "react";
 import CreatorLayout from "./components/layouts/CreatorLayout";
 import AisleShelfDetails from "@/pages/AileShelfDetails";
-
+import ProductSearch from "./pages/newInventory";
+import ProductSearc from "./pages/testInventory";
 // Dynamically import Markdown files
 const markdownModules = import.meta.glob("../src/docs/*.md", {
   eager: true,
@@ -67,10 +68,18 @@ export const router = createBrowserRouter([
             element: <Dashboard />,
           },
           {
-            path: "aile/:aisleId/shelf/:shelveId", 
+            path: "aile/:aisleId/shelf/:shelveId",
             element: <AisleShelfDetails />,
           },
         ],
+      },
+      {
+        path: "product",
+        element: <ProductSearch />,
+      },
+      {
+        path: "test",
+        element: <ProductSearc />,
       },
       {
         path: "documentation",

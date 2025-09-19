@@ -18,7 +18,7 @@ import Papa, { ParseResult } from "papaparse";
 // Define a generic Item type
 type Item = Record<string, string>;
 
-const ProductSearch = () => {
+const ProductSearc = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [items, setItems] = useState<Item[]>([]);
   const [foundItem, setFoundItem] = useState<Item | null>(null);
@@ -35,6 +35,8 @@ const ProductSearch = () => {
   const [createForm, setCreateForm] = useState<Partial<Item>>({});
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // New ref for newInventory file input
+  const newInventoryFileInputRef = useRef<HTMLInputElement | null>(null);
   const dispatch = useDispatch();
 
   // Load inventory and newInventory from localStorage on mount
@@ -90,7 +92,7 @@ const ProductSearch = () => {
     }
   }, []);
 
-  // Handle CSV file upload
+  // Handle main inventory CSV file upload
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -122,11 +124,103 @@ const ProductSearch = () => {
         setSaveColumns(result.meta.fields); // Default to all columns
         setCsvLoaded(true);
         localStorage.setItem("inventoryData", JSON.stringify(parsedItems));
-        toast.success("CSV file loaded and saved to local storage");
+        toast.success(
+          "Main inventory CSV file loaded and saved to local storage"
+        );
         setIsLoading(false);
       },
       error: (error: Error) => {
         toast.error(`Failed to parse CSV: ${error.message}`);
+        setIsLoading(false);
+      },
+    });
+  };
+
+  // New function to handle newInventory CSV upload
+  const handleNewInventoryUpload = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      toast.error("No new inventory file selected");
+      return;
+    }
+
+    if (!csvLoaded || !skuColumn || saveColumns.length === 0) {
+      toast.error("Please upload and configure the main inventory CSV first");
+      return;
+    }
+
+    setIsLoading(true);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (result: ParseResult<Item>) => {
+        if (!result.meta.fields || result.meta.fields.length === 0) {
+          toast.error("New inventory CSV has no valid headers");
+          setIsLoading(false);
+          return;
+        }
+
+        // Validate that the CSV headers match the expected saveColumns
+        const missingColumns = saveColumns.filter(
+          (col) => !result.meta.fields!.includes(col)
+        );
+        if (missingColumns.length > 0) {
+          toast.error(
+            `New inventory CSV is missing required columns: ${missingColumns.join(
+              ", "
+            )}`
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        const parsedItems = result.data.map((item) =>
+          Object.fromEntries(
+            Object.entries(item).map(([key, value]) => [
+              key,
+              String(value || ""),
+            ])
+          )
+        );
+
+        // Merge with existing newInventory, avoiding duplicates based on skuColumn
+        const updatedNewInventory = [...newInventory];
+        parsedItems.forEach((newItem) => {
+          if (
+            newItem[skuColumn] &&
+            !updatedNewInventory.some(
+              (item) => item[skuColumn] === newItem[skuColumn]
+            )
+          ) {
+            // Only include saveColumns in the new item
+            const filteredItem = Object.fromEntries(
+              Object.entries(newItem).filter(([key]) =>
+                saveColumns.includes(key)
+              )
+            );
+            updatedNewInventory.push(filteredItem);
+          }
+        });
+
+        setNewInventory(updatedNewInventory);
+        localStorage.setItem(
+          "newInventory",
+          JSON.stringify(updatedNewInventory)
+        );
+        toast.success(
+          "New inventory CSV loaded and merged into existing new inventory"
+        );
+        setIsLoading(false);
+
+        // Reset the file input
+        if (newInventoryFileInputRef.current) {
+          newInventoryFileInputRef.current.value = "";
+        }
+      },
+      error: (error: Error) => {
+        toast.error(`Failed to parse new inventory CSV: ${error.message}`);
         setIsLoading(false);
       },
     });
@@ -244,10 +338,10 @@ const ProductSearch = () => {
     toast.success("Settings saved to local storage");
   };
 
-  /*useEffect(() => {
+  useEffect(() => {
     // Save settings whenever skuColumn changes
     handleSaveSettings();
-  }, [skuColumn, saveColumns, lists]); */
+  }, [skuColumn, saveColumns, lists]);
 
   // Handle save column selection
   const handleSaveColumnsChange = (column: string) => {
@@ -334,10 +428,10 @@ const ProductSearch = () => {
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="text-2xl font-bold mb-4">Product Search</h1>
 
-      {/* File Upload */}
+      {/* File Upload Section */}
       <div className="mb-4">
         <Label htmlFor="csvUpload" className="mb-2 block">
-          Upload Inventory CSV
+          Upload Main Inventory CSV
         </Label>
         <Input
           id="csvUpload"
@@ -347,11 +441,25 @@ const ProductSearch = () => {
           onChange={handleFileUpload}
           className="p-2"
           disabled={isLoading}
-          aria-label="Upload inventory CSV file"
+          aria-label="Upload main inventory CSV file"
+        />
+        {/* New file input for newInventory CSV */}
+        <Label htmlFor="newInventoryCsvUpload" className="mb-2 block mt-4">
+          Upload Previous New Inventory CSV
+        </Label>
+        <Input
+          id="newInventoryCsvUpload"
+          type="file"
+          accept=".csv"
+          ref={newInventoryFileInputRef}
+          onChange={handleNewInventoryUpload}
+          className="p-2"
+          disabled={isLoading || !csvLoaded}
+          aria-label="Upload previous new inventory CSV file"
         />
         {!csvLoaded && !isLoading && (
           <p className="text-sm text-gray-500 mt-2">
-            Please upload a CSV file to search products.
+            Please upload a main inventory CSV file to search products.
           </p>
         )}
       </div>
@@ -594,4 +702,4 @@ const ProductSearch = () => {
   );
 };
 
-export default ProductSearch;
+export default ProductSearc;

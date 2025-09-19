@@ -26,7 +26,6 @@ const ProductSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [csvLoaded, setCsvLoaded] = useState(false);
   const [headers, setHeaders] = useState<string[]>([]);
-  const [lists, setLists] = useState<string[]>([]);
   const [skuColumn, setSkuColumn] = useState<string>("");
   const [saveColumns, setSaveColumns] = useState<string[]>([]);
   const [editingItem, setEditingItem] = useState<Item | null>(null);
@@ -47,24 +46,8 @@ const ProductSearch = () => {
         setCsvLoaded(true);
         if (parsedItems.length > 0) {
           setHeaders(Object.keys(parsedItems[0]));
-          const settings = localStorage.getItem("settings");
-          if (settings) {
-            try {
-              const parsedSettings = JSON.parse(settings);
-              if (parsedSettings.skuColumn) {
-                setSkuColumn(parsedSettings.skuColumn);
-              }
-              if (parsedSettings.saveColumns) {
-                console.log("Loaded saveColumns:", parsedSettings.saveColumns);
-                setSaveColumns(parsedSettings.saveColumns);
-              }
-              if (parsedSettings.lists) {
-                setLists(parsedSettings.lists);
-              }
-            } catch (error) {
-              toast.error("Failed to load settings from local storage");
-            }
-          }
+          setSkuColumn(Object.keys(parsedItems[0])[0]); // Default to first column
+          setSaveColumns(Object.keys(parsedItems[0])); // Default to all columns
         }
         toast.success("Loaded inventory from local storage");
       } catch (error) {
@@ -233,21 +216,6 @@ const ProductSearch = () => {
     setCreateForm({});
     setSearchTerm("");
   };
-
-  const handleSaveSettings = () => {
-    const settings = {
-      skuColumn,
-      saveColumns,
-      lists,
-    };
-    localStorage.setItem("settings", JSON.stringify(settings));
-    toast.success("Settings saved to local storage");
-  };
-
-  /*useEffect(() => {
-    // Save settings whenever skuColumn changes
-    handleSaveSettings();
-  }, [skuColumn, saveColumns, lists]); */
 
   // Handle save column selection
   const handleSaveColumnsChange = (column: string) => {
