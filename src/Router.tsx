@@ -3,6 +3,7 @@ import { Applayout } from "./components/layouts/AppLayout";
 import NoMatch from "./pages/NoMatch";
 import Empty from "./pages/Empty";
 import ProductSearch from "./pages/newInventory";
+import ApplicationSidebarLayout from "./components/layouts/ApplicationSidebarLayout";
 
 // Main router configuration
 export const router = createBrowserRouter([
@@ -12,7 +13,13 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "",
-        element: <ProductSearch />,
+        element: <ApplicationSidebarLayout />,
+        children: [
+          {
+            path: "",
+            element: <ProductSearch />,
+          },
+        ],
       },
       /*{
         path: ":listName",
