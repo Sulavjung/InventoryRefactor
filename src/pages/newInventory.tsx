@@ -4,7 +4,13 @@ import { addToPrintItem } from "@/store/slices/exampleSlices";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -120,6 +126,23 @@ const ProductSearch = () => {
     if (e.key !== "Enter" || !searchTerm || !csvLoaded || !skuColumn) return;
 
     setIsLoading(true);
+
+    // First check if the item already exists in newInventory
+    const existsInNewInventory = newInventory.some(
+      (item) =>
+        String(item[skuColumn] || "").toLowerCase() === searchTerm.toLowerCase()
+    );
+
+    if (existsInNewInventory) {
+      setIsLoading(false);
+      toast.warning(
+        `Item with ${skuColumn} "${searchTerm}" already exists in new inventory`
+      );
+      setSearchTerm("");
+      return; // stop further checks
+    }
+
+    // Then check if the item exists in the full items list (CSV)
     const found = items.find((item) =>
       String(item[skuColumn] || "")
         .toLowerCase()
@@ -135,45 +158,23 @@ const ProductSearch = () => {
           shelf_id: "unknown",
         })
       );
+
       // Save selected columns to newInventory
       const filteredItem = Object.fromEntries(
         Object.entries(found).filter(([key]) => saveColumns.includes(key))
       );
-      const updatedNewInventory = [...newInventory];
-      if (
-        !updatedNewInventory.some(
-          (item) => item[skuColumn] === found[skuColumn]
-        )
-      ) {
-        updatedNewInventory.push(filteredItem);
-        setNewInventory(updatedNewInventory);
-        localStorage.setItem(
-          "newInventory",
-          JSON.stringify(updatedNewInventory)
-        );
-      } else {
-        toast.warning("Item already exists in new inventory");
-      }
+      const updatedNewInventory = [...newInventory, filteredItem];
+      setNewInventory(updatedNewInventory);
+      localStorage.setItem("newInventory", JSON.stringify(updatedNewInventory));
+
       toast.success(`Found product: ${found["Name"] || "Unknown"}`);
       setSearchTerm("");
     } else {
-      // Check if the barcode exists in newInventory
-      const existsInNewInventory = newInventory.some(
-        (item) =>
-          String(item[skuColumn] || "").toLowerCase() ===
-          searchTerm.toLowerCase()
-      );
-      if (existsInNewInventory) {
-        toast.warning(
-          `Item with ${skuColumn} "${searchTerm}" already exists in new inventory`
-        );
-        setSearchTerm("");
-      } else {
-        setFoundItem(null);
-        setIsCreating(true);
-        setCreateForm({ [skuColumn]: searchTerm });
-        toast.info("No product found. Create a new item below.");
-      }
+      // Not in CSV list either → allow creating new item
+      setFoundItem(null);
+      setIsCreating(true);
+      setCreateForm({ [skuColumn]: searchTerm });
+      toast.info("No product found. Create a new item below.");
     }
   };
 
@@ -441,6 +442,57 @@ const ProductSearch = () => {
                 </p>
               ))}
             </div>
+
+            <hr />
+
+            {/* Price Margin if cost price is valid and greater than 0 or remove $ sign and conver to number */}
+            <div className="mt-2">
+              <h2 className="text-lg font-semibold mb-2">Price Margin</h2>
+              {foundItem["Cost"] &&
+              Number(foundItem["Cost"].replace(/[^0-9.-]+/g, "")) > 0 ? (
+                (() => {
+                  const cost = Number(
+                    foundItem["Cost"].replace(/[^0-9.-]+/g, "")
+                  );
+                  const price = foundItem["Price"]
+                    ? Number(foundItem["Price"].replace(/[^0-9.-]+/g, ""))
+                    : 0;
+                  const margin = price - cost;
+                  const marginPercent = (margin / cost) * 100;
+                  return (
+                    <div>
+                      <p>
+                        <strong>Margin:</strong> ${margin.toFixed(2)} (
+                        {marginPercent.toFixed(2)}%)
+                      </p>
+                      {/* Price for 30 35 40 45 50 percent  */}
+                      <div className="mt-2">
+                        <p className="font-semibold">Suggested Prices:</p>
+                        <div className="list-disc list-inside flex flex-row gap-1">
+                          {[25, 30, 35, 40, 45, 50, 60, 70, 80].map(
+                            (percent) => {
+                              const suggestedPrice = cost * (1 + percent / 100);
+                              return (
+                                <div
+                                  key={percent}
+                                  className="border px-2 py-1 rounded bg-white shadow "
+                                >
+                                  {percent}%: ${suggestedPrice.toFixed(2)}
+                                </div>
+                              );
+                            }
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              ) : (
+                <p className="text-sm text-gray-600">
+                  Cost price is not available or invalid for margin calculation.
+                </p>
+              )}
+            </div>
             <Button
               variant="outline"
               className="mt-4 mr-2"
@@ -507,51 +559,105 @@ const ProductSearch = () => {
 
       {/* New Inventory List */}
       {newInventory.length > 0 && (
-        <Card className="mt-4">
-          <CardHeader>
-            <CardTitle>New Inventory</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="default"
-              className="mb-4"
-              onClick={handleDownloadCsv}
-              aria-label="Download new inventory as CSV"
-            >
-              Download New Inventory CSV
-            </Button>
-            <ul className="space-y-2">
-              {newInventory.map((item) => (
-                <li
-                  key={item[skuColumn]}
-                  className="flex justify-between items-center"
-                >
-                  <span>
-                    {item["Name"]} ({skuColumn}: {item[skuColumn] || "N/A"})
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(item)}
-                      aria-label={`Edit ${item["Name"]}`}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDelete(item)}
-                      aria-label={`Delete ${item["Name"]}`}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <>
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle>Total Items</CardTitle>
+              <CardDescription>{newInventory.length} items</CardDescription>
+            </CardHeader>
+          </Card>
+          <Card className="mt-4">
+            <CardHeader>
+              <CardTitle>New Inventory</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="default"
+                className="mb-4"
+                onClick={handleDownloadCsv}
+                aria-label="Download new inventory as CSV"
+              >
+                Download New Inventory CSV
+              </Button>
+              <table className="w-full table-auto mb-4">
+                <thead>
+                  <tr>
+                    {saveColumns.map((col) => (
+                      <th
+                        key={col}
+                        className="border px-2 py-1 text-left bg-gray-100"
+                      >
+                        {col}
+                      </th>
+                    ))}
+                    <th className="border px-2 py-1 bg-gray-100">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {newInventory.reverse().map((item) => (
+                    <tr key={item[skuColumn]}>
+                      {saveColumns.map((col) => (
+                        <td key={col} className="border px-2 py-1">
+                          {item[col] || "N/A"}
+                        </td>
+                      ))}
+                      <td className="border px-2 py-1">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(item)}
+                            aria-label={`Edit ${item["Name"]}`}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleDelete(item)}
+                            aria-label={`Delete ${item["Name"]}`}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <ul className="space-y-2">
+                {newInventory.reverse().map((item) => (
+                  <li
+                    key={item[skuColumn]}
+                    className="flex justify-between items-center"
+                  >
+                    <span>
+                      {item["Name"]} ({skuColumn}: {item[skuColumn] || "N/A"})
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEdit(item)}
+                        aria-label={`Edit ${item["Name"]}`}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleDelete(item)}
+                        aria-label={`Delete ${item["Name"]}`}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </>
       )}
 
       {/* No Results Message */}
